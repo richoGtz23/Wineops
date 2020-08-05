@@ -81,7 +81,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	uu2 := u2.String()
 	m := Monkey{
 		NeoBase: NeoBase{Uid: uu},
-		Name:    "Karime",
+		Name:    "Karinepe",
 		Love:    100,
 		Age:     24,
 	}
