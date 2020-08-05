@@ -13,11 +13,12 @@ import (
 	"os"
 	"reflect"
 	"strings"
+
+	neodb "github.com/RichoGtz23/Wineops/src/utils"
+
 	"github.com/iancoleman/strcase"
 	"github.com/julienschmidt/httprouter"
 	UUID "github.com/satori/go.uuid"
-
-	neodb "./utils"
 )
 
 // NeoObject type are structs that are compatible to use predefined queries for CUDR on Neo4j
@@ -74,8 +75,8 @@ func (m *Monkey) createNodeCypher() (string, map[string]interface{}) {
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	u, _ := UUID.NewV4()
-	u2, _ := UUID.NewV4()
+	u := UUID.NewV4()
+	u2 := UUID.NewV4()
 	uu := u.String()
 	uu2 := u2.String()
 	m := Monkey{
