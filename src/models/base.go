@@ -106,7 +106,7 @@ func (m *monkey) Create() (string, map[string]interface{}) {
 		returnBuffer.WriteString(fmt.Sprintf(", n.%s AS %s", field, field))
 	}
 	buffer.Write(returnBuffer.Bytes())
-	session := neodb.CreateSession(con)
+	session := neodb.CreateSession(con, "write")
 	defer session.Close()
 	p := map[string]interface{}{"props": props}
 	r, _ := neo4j.Single(session.Run(buffer.String(), p, neo4j.WithTxMetadata(map[string]interface{}{"user": neodb.USER, "datetime": time.Now()})))
@@ -141,7 +141,7 @@ func addFieldsReturn(nName string, props []string) *bytes.Buffer {
 func GetMonkeys(props []string) Monkeys {
 	con := neodb.CreateConnection()
 	defer con.Close()
-	session := neodb.CreateSession(con)
+	session := neodb.CreateSession(con, "read")
 	defer session.Close()
 	mBuff := getSimpleMatchBuffer("m", getType(monkey{}))
 	rBuff := getSimpleReturnBuffer("m")

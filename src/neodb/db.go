@@ -24,10 +24,9 @@ func CreateConnection() neo4j.Driver {
 	return d
 }
 func CreateSession(d neo4j.Driver, mode string) neo4j.Session {
+	m := neo4j.AccessModeRead
 	if mode == "write" {
-		m := neo4j.AccessModeWrite
-	} else {
-		m := neo4j.AccessModeRead
+		m = neo4j.AccessModeWrite
 	}
 	sessionConfig := neo4j.SessionConfig{AccessMode: m}
 	session, err := d.NewSession(sessionConfig)
