@@ -1,5 +1,5 @@
 // TODO: official NEO4j https://medium.com/@angadsharma1016/optimizing-go-neo4j-concurrency-patterns-810dff25f88f
-package neodb
+package models
 
 import (
 	"time"
@@ -14,16 +14,20 @@ const (
 	PASSWORD = "test"
 )
 
-func CreateConnection() neo4j.Driver {
+type NeoDb struct {
+	neo4j.Driver
+}
+
+func CreateConnection() *NeoDb {
 	configForNeo4j40 := func(conf *neo4j.Config) {
 		conf.Log = neo4j.ConsoleLogger(neo4j.DEBUG)
 		conf.Encrypted = false
 	}
 	d, err := neo4j.NewDriver(URI, neo4j.BasicAuth(USER, PASSWORD, ""), configForNeo4j40)
 	handleError(err)
-	return d
+	return &NeoDb{d}
 }
-func CreateSession(d neo4j.Driver, mode string) neo4j.Session {
+func CreateSession(d *NeoDb, mode string) neo4j.Session {
 	m := neo4j.AccessModeRead
 	if mode == "write" {
 		m = neo4j.AccessModeWrite

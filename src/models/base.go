@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/RichoGtz23/Wineops/src/neodb"
 	"github.com/fatih/structs"
 	"github.com/iancoleman/strcase"
 	"github.com/mitchellh/mapstructure"
@@ -65,6 +64,12 @@ func NewMonkey(name string, love int, age int, label string) *monkey {
 	return m
 }
 
+func (n *NeoDb) CreateMonkey(name string, love int, age int) *monkey {
+	m := NewMonkey(name, love, age, "")
+	m.Create(n)
+	return m
+}
+
 // Monkeys is a slice of type monkey
 type Monkeys []monkey
 
@@ -86,10 +91,7 @@ func getType(t interface{}) string {
 }
 
 // CreateNodeCypher is a function used to create a new node in neo4j based of a Monkey Struct
-func (m *monkey) Create() (string, map[string]interface{}) {
-
-	con := neodb.CreateConnection()
-	defer con.Close()
+func (m *monkey) Create(n *NeoDb) (string, map[string]interface{}) {
 
 	var buffer, returnBuffer bytes.Buffer
 	buffer.WriteString(fmt.Sprintf("CREATE (n:%s $props)", m.label))
@@ -106,10 +108,10 @@ func (m *monkey) Create() (string, map[string]interface{}) {
 		returnBuffer.WriteString(fmt.Sprintf(", n.%s AS %s", field, field))
 	}
 	buffer.Write(returnBuffer.Bytes())
-	session := neodb.CreateSession(con, "write")
+	session := CreateSession(n, "write")
 	defer session.Close()
 	p := map[string]interface{}{"props": props}
-	r, _ := neo4j.Single(session.Run(buffer.String(), p, neo4j.WithTxMetadata(map[string]interface{}{"user": neodb.USER, "datetime": time.Now()})))
+	r, _ := neo4j.Single(session.Run(buffer.String(), p, neo4j.WithTxMetadata(map[string]interface{}{"user": USER, "datetime": time.Now()})))
 	// for index, key := range r.Keys() {
 	// 	if index == 0 {
 	// 		continue
@@ -138,16 +140,14 @@ func addFieldsReturn(nName string, props []string) *bytes.Buffer {
 	return b
 }
 
-func GetMonkeys(props []string) Monkeys {
-	con := neodb.CreateConnection()
-	defer con.Close()
-	session := neodb.CreateSession(con, "read")
+func (n *NeoDb) GetMonkeys(props []string) Monkeys {
+	session := CreateSession(n, "read")
 	defer session.Close()
 	mBuff := getSimpleMatchBuffer("m", getType(monkey{}))
 	rBuff := getSimpleReturnBuffer("m")
 	rBuff.Write(addFieldsReturn("m", props).Bytes())
 	mBuff.Write(rBuff.Bytes())
-	records, err := neo4j.Collect(session.Run(mBuff.String(), nil, neo4j.WithTxMetadata(map[string]interface{}{"user": neodb.USER, "datetime": time.Now()})))
+	records, err := neo4j.Collect(session.Run(mBuff.String(), nil, neo4j.WithTxMetadata(map[string]interface{}{"user": USER, "datetime": time.Now()})))
 	if err != nil {
 		panic(err)
 	}

@@ -3,7 +3,10 @@ module github.com/RichoGtz23/Wineops
 go 1.14
 
 require (
+	github.com/bradford-hamilton/go-graphql-api v0.0.0-20200517010519-dae980f02612
 	github.com/fatih/structs v1.1.0
+	github.com/go-chi/chi v3.3.3+incompatible
+	github.com/go-chi/render v1.0.1
 	github.com/graphql-go/graphql v0.7.9
 	github.com/graphql-go/handler v0.2.3
 	github.com/howeyc/fsnotify v0.9.0 // indirect
