@@ -12,7 +12,7 @@ type QueryRoot struct {
 func NewQueryRoot(db *models.NeoDb) *QueryRoot {
 	resolver := Resolver{db: db}
 
-	q_root := QueryRoot{
+	qRoot := QueryRoot{
 		Query: graphql.NewObject(graphql.ObjectConfig{
 			Name: "Query",
 			Fields: graphql.Fields{
@@ -24,5 +24,5 @@ func NewQueryRoot(db *models.NeoDb) *QueryRoot {
 			},
 		}),
 	}
-	return &q_root
+	return &qRoot
 }

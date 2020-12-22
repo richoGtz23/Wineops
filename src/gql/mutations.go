@@ -12,7 +12,7 @@ type MutationRoot struct {
 func NewMutationRoot(db *models.NeoDb) *MutationRoot {
 	resolver := Resolver{db: db}
 
-	m_root := MutationRoot{
+	mRoot := MutationRoot{
 		Mutation: graphql.NewObject(graphql.ObjectConfig{
 			Name: "Mutation",
 			Fields: graphql.Fields{
@@ -38,5 +38,5 @@ func NewMutationRoot(db *models.NeoDb) *MutationRoot {
 			},
 		}),
 	}
-	return &m_root
+	return &mRoot
 }

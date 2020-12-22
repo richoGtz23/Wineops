@@ -90,7 +90,7 @@ func getType(t interface{}) string {
 	return reflect.TypeOf(t).Name()
 }
 
-// CreateNodeCypher is a function used to create a new node in neo4j based of a Monkey Struct
+// Create is a function used to create a new node in neo4j based of a Monkey Struct
 func (m *monkey) Create(n *NeoDb) (string, map[string]interface{}) {
 
 	var buffer, returnBuffer bytes.Buffer
@@ -111,7 +111,7 @@ func (m *monkey) Create(n *NeoDb) (string, map[string]interface{}) {
 	session := CreateSession(n, "write")
 	defer session.Close()
 	p := map[string]interface{}{"props": props}
-	r, _ := neo4j.Single(session.Run(buffer.String(), p, neo4j.WithTxMetadata(map[string]interface{}{"user": USER, "datetime": time.Now()})))
+	r, _ := neo4j.Single(session.Run(buffer.String(), p, neo4j.WithTxMetadata(map[string]interface{}{"user": "neo4j", "datetime": time.Now()})))
 	// for index, key := range r.Keys() {
 	// 	if index == 0 {
 	// 		continue
@@ -147,7 +147,7 @@ func (n *NeoDb) GetMonkeys(props []string) Monkeys {
 	rBuff := getSimpleReturnBuffer("m")
 	rBuff.Write(addFieldsReturn("m", props).Bytes())
 	mBuff.Write(rBuff.Bytes())
-	records, err := neo4j.Collect(session.Run(mBuff.String(), nil, neo4j.WithTxMetadata(map[string]interface{}{"user": USER, "datetime": time.Now()})))
+	records, err := neo4j.Collect(session.Run(mBuff.String(), nil, neo4j.WithTxMetadata(map[string]interface{}{"user": "neo4j", "datetime": time.Now()})))
 	if err != nil {
 		panic(err)
 	}

@@ -2,7 +2,7 @@ package gql
 
 import "github.com/graphql-go/graphql"
 
-// GQL
+// MonkeyType defines the exposed object for a monkey in GraphQL
 var MonkeyType = graphql.NewObject(
 	graphql.ObjectConfig{
 		Name: "Monkey",

@@ -7,7 +7,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -23,30 +25,45 @@ import (
 )
 
 func main() {
-	env := os.Getenv("APP_ENV")
+	file, err := os.Open("/run/secrets/APP_ENV")
+	if err != nil {
+		log.Println("No ENV is set")
+		return
+	}
+	envData := map[string]string{}
+	bytes, err := ioutil.ReadAll(file)
+	err = json.Unmarshal(bytes, &envData)
+	if err != nil {
+		log.Println("Couldn't read environment data")
+		return
+	}
+	env := envData["APP_ENV"]
 	if env == "production" {
 		log.Println("Running api server in production mode")
 	} else {
 		log.Println("Running api server in dev mode")
 	}
+	neo4jHost := envData["NEO4J_HOST"]
+	neo4jPassword := envData["NEO4J_PASSWORD"]
+	neo4jUser := envData["NEO4J_USER"]
+	neo4jPort := envData["NEO4J_PORT"]
+	if neo4jHost == "" || neo4jPassword == "" || neo4jUser == "" || neo4jPort == "" {
+		log.Println("No neo4j ENV variables defined")
+		return
+	}
 
-	router, db := initializeAPI()
+	router, db := initializeAPI(neo4jHost, neo4jPassword, neo4jUser, neo4jPort)
 	defer db.Close()
 
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
 
-func initializeAPI() (*chi.Mux, *models.NeoDb) {
-	// Create a new router
+func initializeAPI(neo4jHost, neo4jPassword, neo4jUser, neo4jPort string) (*chi.Mux, *models.NeoDb) {
 	router := chi.NewRouter()
+	db := models.CreateConnection(neo4jHost, neo4jPassword, neo4jUser, neo4jPort)
 
-	// Create a new connection to our pg database
-	db := models.CreateConnection()
-
-	// Create our root query for graphql
 	rootQuery := gql.NewQueryRoot(db)
 	rootMutation := gql.NewMutationRoot(db)
-	// Create a new graphql schema, passing in the the root query
 	sc, err := graphql.NewSchema(
 		graphql.SchemaConfig{
 			Query:    rootQuery.Query,
@@ -71,18 +88,6 @@ func initializeAPI() (*chi.Mux, *models.NeoDb) {
 		middleware.StripSlashes,    // match paths with a trailing slash, strip it, and continue routing through the mux
 		middleware.Recoverer,       // recover from panics without crashing server
 	)
-
-	// var c = cors.New(cors.Options{
-	// 	AllowedOrigins: []string{"*"},
-	// })
-	// var h = handler.New(&handler.Config{
-	// 	Schema: &Schema,
-	// 	Pretty: true,
-	// })
-	// serveMux := http.NewServeMux()
-	// serveMux.Handle("/favicon", http.NotFoundHandler())
-	// serveMux.Handle("/graphql", c.Handler(h))
-	// serveMux.HandleFunc("/graphiql", graphiql.ServeGraphiQL)
 
 	// Create the graphql route with a Server method to handle it
 	router.Post("/graphql", s.GraphQL())

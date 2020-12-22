@@ -2,28 +2,24 @@
 package models
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/neo4j/neo4j-go-driver/neo4j"
-)
-
-// URI sent as Environment variable (secret) or defaults localinstance call
-const (
-	URI      = "bolt://neo4j:7687"
-	USER     = "neo4j"
-	PASSWORD = "test"
 )
 
 type NeoDb struct {
 	neo4j.Driver
 }
 
-func CreateConnection() *NeoDb {
+func CreateConnection(neo4jHost, neo4jPassword, neo4jUser, neo4jPort string) *NeoDb {
 	configForNeo4j40 := func(conf *neo4j.Config) {
 		conf.Log = neo4j.ConsoleLogger(neo4j.DEBUG)
 		conf.Encrypted = false
 	}
-	d, err := neo4j.NewDriver(URI, neo4j.BasicAuth(USER, PASSWORD, ""), configForNeo4j40)
+	uri := fmt.Sprintf("bolt://%s:%s", neo4jHost, neo4jPort)
+	fmt.Println(uri)
+	d, err := neo4j.NewDriver(uri, neo4j.BasicAuth(neo4jUser, neo4jPassword, ""), configForNeo4j40)
 	handleError(err)
 	return &NeoDb{d}
 }
@@ -45,8 +41,8 @@ func handleError(err error) {
 	}
 }
 
-func DefaultTxMetadata() neo4j.TransactionConfig {
+func DefaultTxMetadata(user string) neo4j.TransactionConfig {
 	return neo4j.TransactionConfig{
-		Metadata: map[string]interface{}{"user": USER, "datetime": time.Now()},
+		Metadata: map[string]interface{}{"user": user, "datetime": time.Now()},
 	}
 }
