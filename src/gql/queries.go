@@ -5,6 +5,7 @@ import (
 	"github.com/graphql-go/graphql"
 )
 
+// TODO: https://gofiber.io/
 type QueryRoot struct {
 	Query *graphql.Object
 }

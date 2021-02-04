@@ -4,7 +4,6 @@ package models
 import (
 	"bytes"
 	"fmt"
-	"reflect"
 	"sort"
 	"strings"
 	"time"
@@ -12,37 +11,25 @@ import (
 	"github.com/fatih/structs"
 	"github.com/iancoleman/strcase"
 	"github.com/mitchellh/mapstructure"
-	"github.com/neo4j/neo4j-go-driver/neo4j"
+	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 	uuid "github.com/satori/go.uuid"
 )
 
-type baseModel struct {
-	ID    int64 `json:"id,omitempty" structs:"id"`
-	label string
-}
+// // NeoModeler interface used for all the interaction between neo4j and GO
+// type NeoModeler interface {
+// 	Perist(n *NeoDb) (string, map[string]interface{})
+// 	// Update() (string, map[string]interface{})
+// 	// Delete() (string, map[string]interface{})
+// 	// GetById(uid string) (string, map[string]interface{})
+// 	// Filter(map[string]interface{}) (string, map[string]interface{})
+// }
 
-// NeoModeler interface used for all the interaction between neo4j and GO
-type NeoModeler interface {
-	setLabel(label string)
-	Create() (string, map[string]interface{})
-	// Update() (string, map[string]interface{})
-	// Delete() (string, map[string]interface{})
-	// GetById(uid string) (string, map[string]interface{})
-	// Filter(map[string]interface{}) (string, map[string]interface{})
-}
-
-func ExtractLabel(n NeoModeler) (interface{}, string) {
-	v := reflect.ValueOf(n)
-	if reflect.TypeOf(n).Kind() == reflect.Ptr {
-		v = v.Elem()
-	}
-	t := v.Type()
-	l := strings.Split(t.String(), ".")
-	return t, strcase.ToCamel(l[len(l)-1])
-}
+const (
+	labelMonkey = "Monkey"
+)
 
 type monkey struct {
-	baseModel   `structs:",omitnested"`
+	// gogm.BaseNode
 	UID         string    `json:"uid" structs:"uid"`
 	Name        string    `json:"name,omitempty" structs:"name,omitempty"`
 	Love        int       `json:"love,omitempty" structs:"love,omitempty"`
@@ -50,51 +37,36 @@ type monkey struct {
 	CreatedDate time.Time `json:"createdDate" structs:"createdDate,omitnested"`
 }
 
+type MonkeyModel struct {
+	DB *NeoDb
+}
+
 // NewMonkey creates a new instance of monkey in its zero state
 func NewMonkey(name string, love int, age int, label string) *monkey {
 	m := &monkey{
-		baseModel:   baseModel{},
 		UID:         uuid.NewV4().String(),
 		Name:        name,
 		Love:        love,
 		Age:         age,
 		CreatedDate: time.Now(),
 	}
-	m.setLabel(label)
 	return m
 }
 
-func (n *NeoDb) CreateMonkey(name string, love int, age int) *monkey {
+func (mm MonkeyModel) Create(name string, love int, age int) *monkey {
 	m := NewMonkey(name, love, age, "")
-	m.Create(n)
+	mm.Persist(m)
 	return m
 }
 
 // Monkeys is a slice of type monkey
 type Monkeys []monkey
 
-func (m *monkey) setLabel(label string) {
-	if m.label != "" {
-		return
-	}
-	if label == "" {
-		l := strings.Split(reflect.TypeOf(m).String(), ".")
-		label := strcase.ToCamel(l[len(l)-1])
-		m.label = label
-	} else {
-		m.label = label
-	}
-}
-
-func getType(t interface{}) string {
-	return reflect.TypeOf(t).Name()
-}
-
-// Create is a function used to create a new node in neo4j based of a Monkey Struct
-func (m *monkey) Create(n *NeoDb) (string, map[string]interface{}) {
+// Persist is a function used to create a new node in neo4j based of a Monkey Struct
+func (mm MonkeyModel) Persist(m *monkey) (string, map[string]interface{}) {
 
 	var buffer, returnBuffer bytes.Buffer
-	buffer.WriteString(fmt.Sprintf("CREATE (n:%s $props)", m.label))
+	buffer.WriteString(fmt.Sprintf("CREATE (n:%s $props)", labelMonkey))
 	buffer.WriteString(" RETURN ID(n) as id")
 	props := structs.Map(m)
 	keys := make([]string, len(props))
@@ -108,17 +80,13 @@ func (m *monkey) Create(n *NeoDb) (string, map[string]interface{}) {
 		returnBuffer.WriteString(fmt.Sprintf(", n.%s AS %s", field, field))
 	}
 	buffer.Write(returnBuffer.Bytes())
-	session := CreateSession(n, "write")
+	session := CreateSession(mm.DB, "write")
 	defer session.Close()
 	p := map[string]interface{}{"props": props}
-	r, _ := neo4j.Single(session.Run(buffer.String(), p, neo4j.WithTxMetadata(map[string]interface{}{"user": "neo4j", "datetime": time.Now()})))
-	// for index, key := range r.Keys() {
-	// 	if index == 0 {
-	// 		continue
-	// 	}
-	// 	fmt.Println(key, r.GetByIndex(index), props[key])
-	// }
-	m.ID = r.GetByIndex(0).(int64)
+	_, err := neo4j.Single(session.Run(buffer.String(), p, neo4j.WithTxMetadata(map[string]interface{}{"user": "neo4j", "datetime": time.Now()})))
+	if err != nil {
+		panic(err)
+	}
 	return buffer.String(), props
 }
 
@@ -140,10 +108,10 @@ func addFieldsReturn(nName string, props []string) *bytes.Buffer {
 	return b
 }
 
-func (n *NeoDb) GetMonkeys(props []string) Monkeys {
-	session := CreateSession(n, "read")
+func (mm MonkeyModel) GetMonkeys(props []string) Monkeys {
+	session := CreateSession(mm.DB, "read")
 	defer session.Close()
-	mBuff := getSimpleMatchBuffer("m", getType(monkey{}))
+	mBuff := getSimpleMatchBuffer("m", labelMonkey)
 	rBuff := getSimpleReturnBuffer("m")
 	rBuff.Write(addFieldsReturn("m", props).Bytes())
 	mBuff.Write(rBuff.Bytes())
@@ -155,7 +123,7 @@ func (n *NeoDb) GetMonkeys(props []string) Monkeys {
 	for i, record := range records {
 		m := map[string]interface{}{}
 		mk := monkey{}
-		for index, key := range record.Keys() {
+		for index, key := range record.Keys {
 			m[key] = record.GetByIndex(index)
 		}
 		err := mapstructure.Decode(m, &mk)

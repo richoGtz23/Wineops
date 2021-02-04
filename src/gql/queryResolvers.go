@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/RichoGtz23/Wineops/src/models"
+	. "github.com/RichoGtz23/Wineops/src/models"
 	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/graphql/language/ast"
 )
@@ -79,5 +80,6 @@ func (r *Resolver) MonkeysResolver(p graphql.ResolveParams) (interface{}, error)
 			i++
 		}
 	}
-	return r.db.GetMonkeys(f), nil
+	monkeyModel := MonkeyModel{DB: r.db}
+	return monkeyModel.GetMonkeys(f), nil
 }

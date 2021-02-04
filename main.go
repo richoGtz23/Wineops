@@ -61,7 +61,6 @@ func main() {
 func initializeAPI(neo4jHost, neo4jPassword, neo4jUser, neo4jPort string) (*chi.Mux, *models.NeoDb) {
 	router := chi.NewRouter()
 	db := models.CreateConnection(neo4jHost, neo4jPassword, neo4jUser, neo4jPort)
-
 	rootQuery := gql.NewQueryRoot(db)
 	rootMutation := gql.NewMutationRoot(db)
 	sc, err := graphql.NewSchema(

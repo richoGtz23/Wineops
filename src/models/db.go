@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/neo4j/neo4j-go-driver/neo4j"
+	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 )
 
 type NeoDb struct {
@@ -15,7 +15,6 @@ type NeoDb struct {
 func CreateConnection(neo4jHost, neo4jPassword, neo4jUser, neo4jPort string) *NeoDb {
 	configForNeo4j40 := func(conf *neo4j.Config) {
 		conf.Log = neo4j.ConsoleLogger(neo4j.DEBUG)
-		conf.Encrypted = false
 	}
 	uri := fmt.Sprintf("bolt://%s:%s", neo4jHost, neo4jPort)
 	fmt.Println(uri)
@@ -29,8 +28,7 @@ func CreateSession(d *NeoDb, mode string) neo4j.Session {
 		m = neo4j.AccessModeWrite
 	}
 	sessionConfig := neo4j.SessionConfig{AccessMode: m}
-	session, err := d.NewSession(sessionConfig)
-	handleError(err)
+	session := d.NewSession(sessionConfig)
 	return session
 }
 
