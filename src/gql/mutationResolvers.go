@@ -3,10 +3,16 @@ package gql
 import (
 	. "github.com/RichoGtz23/Wineops/src/models"
 	"github.com/graphql-go/graphql"
+	"github.com/mindstand/gogm"
 )
 
 func (r *Resolver) CreateMonkeyResolver(params graphql.ResolveParams) (interface{}, error) {
-	monkeyModel := MonkeyModel{DB: r.db}
-	monkey := monkeyModel.Create(params.Args["name"].(string), params.Args["love"].(int), params.Args["age"].(int))
+	monkey := NewMonkey(params.Args["name"].(string), params.Args["love"].(int), params.Args["age"].(int))
+	session, err := gogm.NewSession(false)
+	if err != nil {
+		panic(err)
+	}
+	defer session.Close()
+	session.Save(monkey)
 	return monkey, nil
 }

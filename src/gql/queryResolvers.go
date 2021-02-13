@@ -3,15 +3,12 @@ package gql
 import (
 	"fmt"
 
-	"github.com/RichoGtz23/Wineops/src/models"
 	. "github.com/RichoGtz23/Wineops/src/models"
 	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/graphql/language/ast"
 )
 
-type Resolver struct {
-	db *models.NeoDb
-}
+type Resolver struct{}
 
 func getSelectedFields(selected []string, params graphql.ResolveParams) (map[string]map[string]interface{}, error) {
 	fieldASTs := params.Info.FieldASTs
@@ -80,6 +77,5 @@ func (r *Resolver) MonkeysResolver(p graphql.ResolveParams) (interface{}, error)
 			i++
 		}
 	}
-	monkeyModel := MonkeyModel{DB: r.db}
-	return monkeyModel.GetMonkeys(f), nil
+	return MonkeyModel{}.GetMonkeys(f), nil
 }

@@ -1,7 +1,6 @@
 package gql
 
 import (
-	"github.com/RichoGtz23/Wineops/src/models"
 	"github.com/graphql-go/graphql"
 )
 
@@ -10,8 +9,8 @@ type QueryRoot struct {
 	Query *graphql.Object
 }
 
-func NewQueryRoot(db *models.NeoDb) *QueryRoot {
-	resolver := Resolver{db: db}
+func NewQueryRoot() *QueryRoot {
+	resolver := Resolver{}
 
 	qRoot := QueryRoot{
 		Query: graphql.NewObject(graphql.ObjectConfig{

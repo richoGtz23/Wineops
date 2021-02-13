@@ -1,7 +1,6 @@
 package gql
 
 import (
-	"github.com/RichoGtz23/Wineops/src/models"
 	"github.com/graphql-go/graphql"
 )
 
@@ -9,8 +8,8 @@ type MutationRoot struct {
 	Mutation *graphql.Object
 }
 
-func NewMutationRoot(db *models.NeoDb) *MutationRoot {
-	resolver := Resolver{db: db}
+func NewMutationRoot() *MutationRoot {
+	resolver := Resolver{}
 
 	mRoot := MutationRoot{
 		Mutation: graphql.NewObject(graphql.ObjectConfig{

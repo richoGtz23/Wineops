@@ -13,6 +13,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/RichoGtz23/Wineops/src/gql"
 	"github.com/RichoGtz23/Wineops/src/models"
@@ -52,17 +53,20 @@ func main() {
 		return
 	}
 
-	router, db := initializeAPI(neo4jHost, neo4jPassword, neo4jUser, neo4jPort)
-	defer db.Close()
+	router := initializeAPI(neo4jHost, neo4jPassword, neo4jUser, neo4jPort)
 
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
 
-func initializeAPI(neo4jHost, neo4jPassword, neo4jUser, neo4jPort string) (*chi.Mux, *models.NeoDb) {
+func initializeAPI(neo4jHost, neo4jPassword, neo4jUser, neo4jPort string) *chi.Mux {
 	router := chi.NewRouter()
-	db := models.CreateConnection(neo4jHost, neo4jPassword, neo4jUser, neo4jPort)
-	rootQuery := gql.NewQueryRoot(db)
-	rootMutation := gql.NewMutationRoot(db)
+	intPort, err := strconv.Atoi(neo4jPort)
+	if err != nil {
+		panic(err)
+	}
+	models.CreateConnection(neo4jHost, neo4jPassword, neo4jUser, intPort)
+	rootQuery := gql.NewQueryRoot()
+	rootMutation := gql.NewMutationRoot()
 	sc, err := graphql.NewSchema(
 		graphql.SchemaConfig{
 			Query:    rootQuery.Query,
@@ -93,5 +97,5 @@ func initializeAPI(neo4jHost, neo4jPassword, neo4jUser, neo4jPort string) (*chi.
 	// router.Get("/favicon", http.NotFoundHandler())
 	router.Get("/graphiql", graphiql.ServeGraphiQL)
 
-	return router, db
+	return router
 }

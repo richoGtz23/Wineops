@@ -7,7 +7,7 @@ var MonkeyType = graphql.NewObject(
 	graphql.ObjectConfig{
 		Name: "Monkey",
 		Fields: graphql.Fields{
-			"uid": &graphql.Field{
+			"uuid": &graphql.Field{
 				Type: graphql.String,
 			},
 			"name": &graphql.Field{
